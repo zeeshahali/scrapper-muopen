@@ -80,7 +80,7 @@ def get_data(classes):
         length = clas.find_element_by_css_selector('div.cell.length').text
         page_link = clas.find_element_by_css_selector('div.cell.title')\
             .find_element_by_css_selector('a').get_attribute('href')
-        link = clas.find_element_by_class_name('download-music').get_attribute('href')
+        link = clas.find_element_by_class_name('moplayer-audio').get_attribute('src')
         directory = directory_name(title, mood, instruments, length)
         directories.append(directory)
         links.append(link)
@@ -92,11 +92,6 @@ def create_folder(name):
     directory = os.path.join(parent_dir, name)
     os.mkdir(directory)
     return directory+"/"
-
-def copy_file(name, link, directory):
-    driver.get(link)
-    time.sleep(5)
-    #shutil.move("/")
 
 def create_doc(filename):
     mylist = []
@@ -139,7 +134,7 @@ def download_data(url):
         for i in range(len(page)):
             print(str(i+1) + "- Downloading \""+title[i]+ "\" ...")
             path = create_folder(directory[i])
-            #download_file(path+title[i]+".mp3", link[i])
+            download_file(path+title[i]+".mp3", link[i])
             download_page_data(page[i], path, title[i])
     except:
         print("An exception occured")
