@@ -35,7 +35,11 @@ def get_sheet():
 
 def download_sheet(path):
     name, url, exists = get_sheet()
-    if exists : download_file(path+name, url)
+    if exists:
+        try:
+            download_file(path + name, url)
+        except:
+            download_file(path+"Sheet.pdf", url)
 
 def download_file(file_name, url):
     with requests.get(url, stream=True, headers={
@@ -145,7 +149,10 @@ def download_data(url):
         print("Downloading (" + str(i+1) + "/" + str(len(directory)) + ") .....")
         path = create_folder(directory[i])
         download_page_data(page[i], path)
-        download_file(path+title[i]+".mp3", link[i])
+        try:
+            download_file(path+title[i]+".mp3", link[i])
+        except:
+            download_file(path+"Music.mp3", link[i])
     driver.close()
 
 url = "https://musopen.org/account/login/"
