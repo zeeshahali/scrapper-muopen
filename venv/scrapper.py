@@ -7,6 +7,8 @@ import time
 import datetime
 import urllib.parse
 
+
+
 chrome_options = webdriver.ChromeOptions()
 prefs = {'download.default_directory' : os.getcwd() + "/Downloads"}
 chrome_options.add_experimental_option('prefs', prefs)
@@ -49,6 +51,9 @@ def download_file(file_name, url):
             shutil.copyfileobj(r.raw, f)
 
 def directory_name(title, mood, instrument, length):
+    if len(title) > 100:
+        new_title = title[:99]
+        title = new_title
     rdirectory = title + "-"
     if mood != "+ add moods"    :   rdirectory = rdirectory + mood + "-"
     rdirectory = rdirectory + instrument + "-" + str(length)
@@ -57,16 +62,6 @@ def directory_name(title, mood, instrument, length):
     for ch in chs: directory = directory.replace(ch, '-')
     return directory
 
-def load_more():
-    try:
-        value = driver.find_element_by_xpath("//*[contains(text(), 'Load more')]")
-        while value:
-            value.click()
-            time.sleep(3)
-            value = driver.find_element_by_xpath("//*[contains(text(), 'Load more')]")
-    except:
-        pass
-
 def get_page_data():
     mylist = []
     elements = driver.find_elements_by_tag_name('li')
@@ -74,11 +69,7 @@ def get_page_data():
         mylist.append(elements[x].text)
     return mylist
 
-def get_data(classes):
-    directories = []
-    titles = []
-    links = []
-    pages = []
+def get_data(classes, directories, titles, links, pages):
     for clas in classes:
         title = clas.find_element_by_css_selector('div.cell.title').text
         chs = ['/', '\\', '\"', '*', '?', '<', '>', '|']
@@ -107,11 +98,14 @@ def create_doc(filename, url):
     elements = driver.find_elements_by_tag_name('li')
     for x in range(15, 22):
         mylist.append(elements[x].text)
-    about = driver.find_element_by_xpath('/html/body/div[3]/div/div[4]/div[1]/div/div/div/div').text
     document = docx.Document()
     document.add_heading('Information', 0)
-    document.add_heading('About This Piece', level=2)
-    document.add_paragraph(about)
+    try:
+        about = driver.find_element_by_xpath("//div[@itemprop='description']").text
+        document.add_heading('About This Piece', level=2)
+        document.add_paragraph(about)
+    except:
+        pass
     document.add_heading('URL:' + url, level=3)
     document.add_paragraph("")
     document.add_heading('INFO:', level=2)
@@ -141,18 +135,32 @@ def download_data(url):
     driver.get(url)
     login('saimfd003@gmail.com', '123saim') #add email and password here (<email>, <password>)
     input("Press Enter to continue after you have selected filters")
-    load_more()
-    classes = driver.find_elements_by_xpath("//div[contains(@class, 'flex-table-row moplayer moplayer-processed')]")
-    directory, title, link, page = get_data(classes)
-    data_dir()
-    for i in range(len(directory)):
-        print("Downloading (" + str(i+1) + "/" + str(len(directory)) + ") .....")
-        path = create_folder(directory[i])
-        download_page_data(page[i], path)
+    directories = []
+    titles = []
+    links = []
+    pages = []
+    current_page = 2
+    current_url = driver.current_url
+    currentList = current_url.split('?', 1)
+    while 1:
+        classes = driver.find_elements_by_xpath("//div[contains(@class, 'flex-table-row moplayer moplayer-processed')]")
+        get_data(classes, directories, titles, links, pages)
+        my_url = currentList[0] + '?page=' + str(current_page) + '&' + currentList[1]
+        driver.get(my_url)
         try:
-            download_file(path+title[i]+".mp3", link[i])
+            status = driver.find_element_by_xpath("//div[@class='error-404']")
+            break
         except:
-            download_file(path+"Music.mp3", link[i])
+            current_page = current_page + 1
+    data_dir()
+    for i in range(len(directories)):
+        print("Downloading (" + str(i+1) + "/" + str(len(directories)) + ") .....")
+        path = create_folder(directories[i])
+        download_page_data(pages[i], path)
+        try:
+            download_file(path+titles[i]+".mp3", links[i])
+        except:
+            download_file(path+"Music.mp3", links[i])
     driver.close()
 
 url = "https://musopen.org/account/login/"
