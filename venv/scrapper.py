@@ -110,11 +110,14 @@ def create_doc(filename, url):
     document.add_paragraph("")
     document.add_heading('INFO:', level=2)
     for items in mylist:
-        index = items.split(":")
-        element = index[1]
-        index[1] = ":\t"
-        index.append(element)
-        document.add_paragraph(index)
+        try:
+            index = items.split(":")
+            element = index[1]
+            index[1] = ":\t"
+            index.append(element)
+            document.add_paragraph(index)
+        except:
+            pass
     document.save(filename)
 
 def download_page_data(page, path):
